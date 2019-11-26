@@ -85,7 +85,16 @@ func (b *Bot) FindGroupByName(name string) (slack.Group, error) {
 			return g, nil
 		}
 	}
-	return slack.Group{}, nil
+	return slack.Group{}, errors.New("Group not found")
+}
+
+func (b *Bot) FindChannelByName(name string) (slack.Channel, error) {
+	for _, c := range b.Channels {
+		if c.Name == name {
+			return c, nil
+		}
+	}
+	return slack.Channel{}, errors.New("Channel not found")
 }
 
 func (b *Bot) OpenIMChannel(uid string) (bool, bool, string, error) {
