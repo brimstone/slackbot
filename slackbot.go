@@ -105,6 +105,10 @@ func (b *Bot) PostMessage(channelID string, options ...slack.MsgOption) (string,
 	return b.api.PostMessage(channelID, options...)
 }
 
+func (b *Bot) SetChannelTopic(channelID string, topic string) (string, error) {
+	return b.api.SetChannelTopic(channelID, topic)
+}
+
 func NewBot() (*Bot, error) {
 	slackToken := os.Getenv("SLACK_TOKEN")
 	if slackToken == "" {
