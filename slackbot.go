@@ -115,6 +115,7 @@ func NewBot() (*Bot, error) {
 	b.api = slack.New(slackToken)
 	b.updateUsers()
 	b.updateGroups()
+	b.updateChannels()
 
 	return b, nil
 }
