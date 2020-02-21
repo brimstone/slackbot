@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/brimstone/logger"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 type Bot struct {
@@ -107,6 +107,10 @@ func (b *Bot) PostMessage(channelID string, options ...slack.MsgOption) (string,
 
 func (b *Bot) SetChannelTopic(channelID string, topic string) (string, error) {
 	return b.api.SetChannelTopic(channelID, topic)
+}
+
+func (b *Bot) JoinChannel(channelID string) (*slack.Channel, error) {
+	return b.api.JoinChannel(channelID)
 }
 
 func NewBot() (*Bot, error) {
