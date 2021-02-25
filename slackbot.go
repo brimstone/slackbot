@@ -106,7 +106,12 @@ func (b *Bot) PostMessage(channelID string, options ...slack.MsgOption) (string,
 }
 
 func (b *Bot) SetChannelTopic(channelID string, topic string) (string, error) {
-	return b.api.SetChannelTopic(channelID, topic)
+	// https://api.slack.com/changelog/2020-01-deprecating-antecedents-to-the-conversations-api
+	channel, err := b.api.SetTopicOfConversation(channelID, topic)
+	if err != nil {
+		return "", err
+	}
+	return channel.Topic.Value, nil
 }
 
 func (b *Bot) JoinChannel(channelID string) (*slack.Channel, error) {
