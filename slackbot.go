@@ -59,14 +59,26 @@ func (b *Bot) updateGroups() {
 func (b *Bot) updateChannels() {
 	log := logger.New()
 	b.Channels = make(map[string]slack.Channel)
-	c, _ := b.api.GetChannels(true)
-	for _, channel := range c {
-		b.Channels[channel.ID] = channel
-		log.Debug("Channel",
-			log.Field("ID", channel.ID),
-			log.Field("Name", channel.Name),
-			log.Field("Topic", channel.Topic.Value),
-		)
+	var cursor string
+	for {
+		channels, nextCursor, err := b.api.GetConversations(&slack.GetConversationsParameters{
+			Cursor: cursor,
+		})
+		if err != nil {
+			panic(err)
+		}
+		for _, channel := range channels {
+			b.Channels[channel.ID] = channel
+			log.Debug("Channel",
+				log.Field("ID", channel.ID),
+				log.Field("Name", channel.Name),
+				log.Field("Topic", channel.Topic.Value),
+			)
+		}
+		if nextCursor == "" {
+			return
+		}
+		cursor = nextCursor
 	}
 }
 
