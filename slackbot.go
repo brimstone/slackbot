@@ -59,14 +59,26 @@ func (b *Bot) updateGroups() {
 func (b *Bot) updateChannels() {
 	log := logger.New()
 	b.Channels = make(map[string]slack.Channel)
-	c, _ := b.api.GetChannels(true)
-	for _, channel := range c {
-		b.Channels[channel.ID] = channel
-		log.Debug("Channel",
-			log.Field("ID", channel.ID),
-			log.Field("Name", channel.Name),
-			log.Field("Topic", channel.Topic.Value),
-		)
+	var cursor string
+	for {
+		channels, nextCursor, err := b.api.GetConversations(&slack.GetConversationsParameters{
+			Cursor: cursor,
+		})
+		if err != nil {
+			panic(err)
+		}
+		for _, channel := range channels {
+			b.Channels[channel.ID] = channel
+			log.Debug("Channel",
+				log.Field("ID", channel.ID),
+				log.Field("Name", channel.Name),
+				log.Field("Topic", channel.Topic.Value),
+			)
+		}
+		if nextCursor == "" {
+			return
+		}
+		cursor = nextCursor
 	}
 }
 
@@ -106,7 +118,12 @@ func (b *Bot) PostMessage(channelID string, options ...slack.MsgOption) (string,
 }
 
 func (b *Bot) SetChannelTopic(channelID string, topic string) (string, error) {
-	return b.api.SetChannelTopic(channelID, topic)
+	// https://api.slack.com/changelog/2020-01-deprecating-antecedents-to-the-conversations-api
+	channel, err := b.api.SetTopicOfConversation(channelID, topic)
+	if err != nil {
+		return "", err
+	}
+	return channel.Topic.Value, nil
 }
 
 func (b *Bot) JoinChannel(channelID string) (*slack.Channel, error) {
