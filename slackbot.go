@@ -11,7 +11,7 @@ import (
 type Bot struct {
 	api      *slack.Client
 	Users    map[string]slack.User
-	Groups   map[string]slack.Group
+	Groups   map[string]slack.Channel
 	Channels map[string]slack.Channel
 }
 
@@ -43,9 +43,14 @@ func (b *Bot) updateUsers() {
 
 func (b *Bot) updateGroups() {
 	log := logger.New()
-	b.Groups = make(map[string]slack.Group)
+	b.Groups = make(map[string]slack.Channel)
 	// Get all groups since there isn't an API to get groups by name
-	g, _ := b.api.GetGroups(true)
+	g, _, _ := b.api.GetConversations(&slack.GetConversationsParameters{
+		Types: []string{"private_channel"},
+	})
+	log.Info("Updating groups",
+		log.Field("groups", len(g)),
+	)
 	for _, group := range g {
 		b.Groups[group.ID] = group
 		log.Debug("Group",
@@ -91,13 +96,13 @@ func (b *Bot) FindUserByName(name string) (slack.User, error) {
 	return slack.User{}, errors.New("User not found")
 }
 
-func (b *Bot) FindGroupByName(name string) (slack.Group, error) {
+func (b *Bot) FindGroupByName(name string) (slack.Channel, error) {
 	for _, g := range b.Groups {
 		if g.Name == name {
 			return g, nil
 		}
 	}
-	return slack.Group{}, errors.New("Group not found")
+	return slack.Channel{}, errors.New("Group not found")
 }
 
 func (b *Bot) FindChannelByName(name string) (slack.Channel, error) {
@@ -109,9 +114,11 @@ func (b *Bot) FindChannelByName(name string) (slack.Channel, error) {
 	return slack.Channel{}, errors.New("Channel not found")
 }
 
+/*
 func (b *Bot) OpenIMChannel(uid string) (bool, bool, string, error) {
 	return b.api.OpenIMChannel(uid)
 }
+*/
 
 func (b *Bot) PostMessage(channelID string, options ...slack.MsgOption) (string, string, error) {
 	return b.api.PostMessage(channelID, options...)
@@ -126,8 +133,8 @@ func (b *Bot) SetChannelTopic(channelID string, topic string) (string, error) {
 	return channel.Topic.Value, nil
 }
 
-func (b *Bot) JoinChannel(channelID string) (*slack.Channel, error) {
-	return b.api.JoinChannel(channelID)
+func (b *Bot) JoinChannel(channelID string) (*slack.Channel, string, []string, error) {
+	return b.api.JoinConversation(channelID)
 }
 
 func NewBot() (*Bot, error) {
